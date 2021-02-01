@@ -63,7 +63,7 @@ class AWSLogsGenerator(BaseLogGenerator):
         """
 
         new_date = to_datetime(timestamp, '%b %d %H:%M:%S')
-        update = new_date + " AWS-Console message - " + string
+        update = new_date + " console - " + string
 
         creation_date = re.compile('"creationDate":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z"')
         new_creation_date = '"creationDate":"' + to_datetime(timestamp, '%Y-%m-%dT%H:%M:%SZ') + '"'
@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
     aws = AWSLogsGenerator(start=args.start, end=args.end, count=args.count, filename=args.filename,
                            outdir=args.outdir)
-    if args.mode is not 'live':
+    if args.mode != 'live':
         aws.generate_between_dates()
         aws.compress()
     else:

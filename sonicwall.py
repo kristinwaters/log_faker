@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     sonic = SonicwallLogGenerator(start=args.start, end=args.end, count=args.count, filename=args.filename,
                            outdir=args.outdir)
-    if args.mode is not 'live':
+    if args.mode != 'live':
         sonic.generate_between_dates()
         sonic.compress()
     else:

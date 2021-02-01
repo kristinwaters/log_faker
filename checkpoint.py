@@ -109,7 +109,7 @@ class CheckpointLogGenerator(BaseLogGenerator):
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser(description='Log faker for generating mssql fake log')
+    parser = argparse.ArgumentParser(description='Log faker for generating fake log for checkpoint')
 
     parser.add_argument('-c', '--count', type=int, help='How much logs you want, default to 1 billion', default=1000000)
     parser.add_argument('-o', '--outdir', type=str, help='Output dir for log file', default='destination')
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     cp = CheckpointLogGenerator(start=args.start, end=args.end, count=args.count, filename=args.filename,
                                 outdir=args.outdir)
-    if args.mode is not 'live':
+    if args.mode != 'live':
         cp.generate_between_dates()
         cp.compress()
     else:

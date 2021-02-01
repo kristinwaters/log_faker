@@ -1,7 +1,4 @@
-import os
 import socket
-import gzip
-import shutil
 
 from common.config_reader import ConfigReader
 
@@ -32,8 +29,8 @@ class BaseLogGenerator:
         :param data:
         :return:
         """
-        host = self._CONFIG.read('siem', 'host')
-        port = self._CONFIG.read('siem', 'port')
+        host = self._CONFIG.read('syslog', 'host')
+        port = self._CONFIG.read('syslog', 'port')
         self._SOC.sendto(bytes(data, encoding='utf-8'), (host, int(port)))
 
     def compress(self):

@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     mssql = MSSQLLogGenerator(start=args.start, end=args.end, count=args.count, filename=args.filename,
                            outdir=args.outdir)
-    if args.mode is not 'live':
+    if args.mode != 'live':
         mssql.generate_between_dates()
         mssql.compress()
     else:

@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     forti = FortigateLogGenerator(start=args.start, end=args.end, count=args.count, filename=args.filename,
                            outdir=args.outdir)
-    if args.mode is not 'live':
+    if args.mode != 'live':
         forti.generate_between_dates()
         forti.compress()
     else:
