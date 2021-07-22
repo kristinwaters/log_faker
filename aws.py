@@ -8,8 +8,10 @@ import argparse
 import datetime
 
 import pandas as pd
+from geoip2.errors import AddressNotFoundError
 
 from common.log_generator import BaseLogGenerator
+from common.location_finder import LocationFinder
 from utils import to_datetime, get_ip_list, get_random_username, time_range
 
 
@@ -50,7 +52,7 @@ class AWSLogsGenerator(BaseLogGenerator):
         :return:
         """
         ip_pattern = re.compile('"sourceIPAddress":"\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}"')
-        new_ip = '"sourceIPAddress":"' + self.src_ip + '"'
+        new_ip = '"sourceIPAddress":"' + self.src_ip.strip() + '"'
         update = re.sub(pattern=ip_pattern, repl=new_ip, string=string)
         return update
 
@@ -132,6 +134,27 @@ class AWSLogsGenerator(BaseLogGenerator):
                 shutil.copyfileobj(f_in, f_out)
         os.remove(self.dest)
 
+    def add_location(self, log: str) -> str:
+        """
+        A method to return ip geolocation if ip present in log
+        :param log:
+        :return:
+        """
+        ip_pat = re.compile(r'sourceIPAddress":"(?P<src_ip>\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})"')
+        match = ip_pat.search(log)
+        try:
+            if match:
+                ip = match.group('src_ip')
+                city = LocationFinder(ip).get_city()
+                lat = LocationFinder(ip).get_latitude()
+                long = LocationFinder(ip).get_longitude()
+                location = r'''"location": {"ip_city":"%s","latitude":"%s","longitude":"%s"}''' % (city, lat, long)
+                updated = log.strip('\n') + location
+                return updated
+            return log
+        except AddressNotFoundError:
+            return log
+
     def generate_realtime(self):
         """
         Generates logs, with current time in it.
@@ -141,10 +164,11 @@ class AWSLogsGenerator(BaseLogGenerator):
         while True:
             now = datetime.datetime.now().strftime('%b %d %H:%M:%S')
             log = self.create_log(now)
-            self.forward(log)
+            updated = self.add_location(log)
+            self.forward(updated)
             period = random.sample(time_range, 1)[0]
             time.sleep(period)
-            print(log)
+            print(updated)
 
 
 if __name__ == '__main__':
