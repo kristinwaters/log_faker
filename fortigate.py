@@ -7,7 +7,7 @@ import argparse
 import datetime
 import random
 import pandas as pd
-import string 
+import sys
 
 from common.log_generator import BaseLogGenerator
 from utils import to_datetime, get_random_username, get_random_country, get_ip_list, generate_random_string
@@ -33,12 +33,6 @@ class FortigateLogGenerator(BaseLogGenerator):
         self.filename = filename
         self.dest = os.path.abspath(os.path.join(self.outdir, self.filename))
         self.src_ip = random.sample(self._IP_STORE, 1)[0]
-        self.src_port = str(random.randint(0, 65535))
-        self.dst_port = str(random.randint(0, 65535))
-        self.crscore = str(random.randint(0, 100))
-        self.craction = str(random.randint(0, 500000))
-        self.crlevel = random.choice(["low", "medium", "high"])
-        self.comment =  generate_random_string()
         self.src_country = get_random_country()
         self.username = get_random_username()
 
@@ -56,9 +50,10 @@ class FortigateLogGenerator(BaseLogGenerator):
         :param string:
         :return:
         """
+
         dev_ip_pat = re.compile('\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3}\sdate')
-        new_ip = self.src_ip + ' date'
-        update = re.sub(pattern=dev_ip_pat, repl=new_ip, string=string)
+        new_ip = self.src_ip + 'date'
+        update = (re.sub(pattern=dev_ip_pat, repl=new_ip, string=string)).replace('\n', ' ')
 
         ips = random.sample(self._IP_STORE, 3)
 
@@ -108,35 +103,42 @@ class FortigateLogGenerator(BaseLogGenerator):
         :param string:
         :return:
         """
-        src_country_pat = re.compile('srccountry="((?!Reserved).)*"')
+
+        src_country_pat = re.compile('srccountry="\w+"')
         new_src_country = 'srccountry="' + self.src_country + '"'
         update1 = re.sub(pattern=src_country_pat, repl=new_src_country, string=string)
+        #print("UPDATE1: " + update1)
 
-        src_port_pat = re.compile('srcport="((?!Reserved).)*"')
-        new_src_port = 'srcport="' + self.src_port + '"'
+        src_port_pat = re.compile('srcport=\w+')
+        new_src_port = 'srcport=' + str(random.randint(0, 65535))
         update2 = re.sub(pattern=src_port_pat, repl=new_src_port, string=update1)
+       # print("UPDATE2: " + update2)
 
-        dst_port_pat = re.compile('dstport="((?!Reserved).)*"')
-        new_dst_port = 'dstport="' + self.dst_port + '"'
+        dst_port_pat = re.compile('dstport=\w+')
+        new_dst_port = 'dstport=' + str(random.randint(0, 65535))
         update3 = re.sub(pattern=dst_port_pat, repl=new_dst_port, string=update2)
+        #print("UPDATE3: " + update3)
 
-        crscore_pat = re.compile('crscore="((?!Reserved).)*"')
-        new_crscore = 'crscore="' + self.crscore + '"'
+        crscore_pat = re.compile('crscore=\w+')
+        new_crscore = 'crscore=' + str(random.randint(0, 100))
         update4 = re.sub(pattern=crscore_pat, repl=new_crscore, string=update3)        
+        #print("UPDATE4: " + update4)
 
-        craction_pat = re.compile('craction="((?!Reserved).)*"')
-        new_craction = 'craction="' + self.craction + '"'
+        craction_pat = re.compile('craction=\w+')
+        new_craction = 'craction=' + str(random.randint(0, 500000))
         update5 = re.sub(pattern=craction_pat, repl=new_craction, string=update4)   
+        #print("UPDATE5: " + update5)
 
-        crlevel_pat = re.compile('crlevel="((?!Reserved).)*"')
-        new_crlevel = 'crlevel="' + self.crlevel + '"'
+        crlevel_pat = re.compile('crlevel=\w+')
+        new_crlevel = 'crlevel="' + random.choice(["low", "medium", "high"]) + '"'
         update6 = re.sub(pattern=crlevel_pat, repl=new_crlevel, string=update5)   
-  
-        comment_pat = re.compile('comment="((?!Reserved).)*"')
-        new_comment = 'comment="' + self.comment + '"' 
+        #print("UPDATE6: " + update6)
+       
+        comment_pat = re.compile('comment="\w+')
+        new_comment = 'comment="' + generate_random_string() + '"' 
         update7 = re.sub(pattern=comment_pat, repl=new_comment, string=update6) 
-
-        print(update7)
+    
+        #print("UPDATE7: " + update7 + "\n\n")
         return update7
 
     def get_time_series(self):
@@ -157,7 +159,8 @@ class FortigateLogGenerator(BaseLogGenerator):
         log = self.replace_all_ips(log)
         log = self.replace_other(log)
         log = self.replace_all_dates(log, date)
-        return log.replace('\n', ' ')
+        log = log + "\n"
+        return log
 
     def generate_between_dates(self):
         """
@@ -197,14 +200,14 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Log faker for generating fake log')
 
-    parser.add_argument('-c', '--count', type=int, help='How much logs you want, default to 1 billion', default=10)
+    parser.add_argument('-c', '--count', type=int, help='How much logs you want, default to 1 billion', default=10000000)
     parser.add_argument('-o', '--outdir', type=str, help='Output dir for log file', default='destination')
     parser.add_argument('-n', '--filename', type=str, help='Filename for log file', default='fortigate.log')
     parser.add_argument('-s', '--start', type=str, help='Start date from which logs will generate', default='2022-01-01')
     parser.add_argument('-e', '--end', type=str, help='End date up to which logs will generate', default='2024-06-26')
     parser.add_argument(
         '-m', '--mode', type=str, help='Generation mode whether logs will generate realtime or between given dates',
-        default='live'
+        default='dategen'
     )
 
     args = parser.parse_args()
@@ -213,6 +216,6 @@ if __name__ == '__main__':
                            outdir=args.outdir)
     if args.mode != 'live':
         forti.generate_between_dates()
-        forti.compress()
+        #forti.compress()
     else:
         forti.generate_realtime()
