@@ -1,11 +1,20 @@
 import os
 import random
 import datetime
+import faker.providers
+import faker.providers.python
 import pandas as pd
-
+import string
 import faker
 
 fake = faker.Faker()
+
+def generate_random_string(length=12):
+ 
+    # ascii_letters consist of alphabets for 'a' to 'z' and 'A' to 'Z'
+    # digits consist of '0' to '9'
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choices(characters, k=length))
 
 
 def get_ip_list():
